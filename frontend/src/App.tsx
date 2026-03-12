@@ -1,5 +1,6 @@
 import { useState, useEffect, useReducer, FormEvent } from 'react'
 import './App.css'
+import Dashboard from './Dashboard'
 
 const STORAGE_KEY = 'api_key'
 
@@ -32,12 +33,15 @@ function fetchReducer(_state: FetchState, action: FetchAction): FetchState {
   }
 }
 
+type Page = 'items' | 'dashboard'
+
 function App() {
   const [token, setToken] = useState(
     () => localStorage.getItem(STORAGE_KEY) ?? '',
   )
   const [draft, setDraft] = useState('')
   const [fetchState, dispatch] = useReducer(fetchReducer, { status: 'idle' })
+  const [currentPage, setCurrentPage] = useState<Page>('items')
 
   useEffect(() => {
     if (!token) return
@@ -69,6 +73,11 @@ function App() {
     localStorage.removeItem(STORAGE_KEY)
     setToken('')
     setDraft('')
+    setCurrentPage('items')
+  }
+
+  function navigateTo(page: Page) {
+    setCurrentPage(page)
   }
 
   if (!token) {
@@ -87,13 +96,22 @@ function App() {
     )
   }
 
+  if (currentPage === 'dashboard') {
+    return <Dashboard token={token} onBack={() => navigateTo('items')} />
+  }
+
   return (
     <div>
       <header className="app-header">
         <h1>Items</h1>
-        <button className="btn-disconnect" onClick={handleDisconnect}>
-          Disconnect
-        </button>
+        <div className="header-buttons">
+          <button className="btn-nav" onClick={() => navigateTo('dashboard')}>
+            Dashboard
+          </button>
+          <button className="btn-disconnect" onClick={handleDisconnect}>
+            Disconnect
+          </button>
+        </div>
       </header>
 
       {fetchState.status === 'loading' && <p>Loading...</p>}
